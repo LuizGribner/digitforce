@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useRef, type RefObject } from "react";
-import { useFrame } from "@react-three/fiber";
+import { advance, Canvas, useFrame } from "@react-three/fiber";
 import { OrthographicCamera, RoundedBox, useTexture, View } from "@react-three/drei";
 import * as THREE from "three";
 
@@ -19,7 +19,9 @@ import {
   type Motion,
   type Surface,
 } from "@/components/hero-globe/globe-motion";
-import { getRenderQuality } from "@/components/hero-globe/render-quality";
+import { getRenderQuality, maxDpr } from "@/components/hero-globe/render-quality";
+import { gsap } from "@/lib/gsap";
+import { AdaptiveResolution } from "./adaptive-resolution";
 import { StudioEnvironment } from "./studio-lights";
 
 /** Estado controlado pelo DOM (hero.tsx) e lido a cada frame, sem re-render. */
@@ -412,7 +414,7 @@ type Props = {
   sim: RefObject<GlobeSim>;
 };
 
-function Scene({ motion, sim, viewRef }: Props & { viewRef: RefObject<HTMLElement | THREE.Group | null> }) {
+function Scene({ motion, sim }: Props) {
   const world = useRef<THREE.Group>(null);
   const planet = useRef<THREE.Group>(null);
   const runner = useRef<THREE.Group>(null);
@@ -424,22 +426,22 @@ function Scene({ motion, sim, viewRef }: Props & { viewRef: RefObject<HTMLElemen
   useFrame((state, delta) => {
     const m = motion.current;
     const cfg = sim.current;
-    const view = viewRef.current;
     const g = globe.current;
     const s = surface.current;
     if (!m || !cfg || !world.current || !planet.current || !runner.current) return;
 
-    // Câmera ortográfica dimensionada pelo container (mesma regra da referência)
-    if (view instanceof HTMLElement) {
-      const rect = view.getBoundingClientRect();
-      const small = rect.width < 700;
-      const zoom = rect.width / (small ? 5.65 : 5.25);
+    // Câmera ortográfica dimensionada pela área do globo (mesma regra da referência). state.size é o retângulo do
+    // View (canvas global) ou o próprio canvas (modo embutido no toque)
+    const { width, height } = state.size;
+    if (width > 0 && height > 0) {
+      const small = width < 700;
+      const zoom = width / (small ? 5.65 : 5.25);
       const camera = state.camera as THREE.OrthographicCamera;
       if (Math.abs(camera.zoom - zoom) > 0.01) {
         camera.zoom = zoom;
         camera.updateProjectionMatrix();
       }
-      world.current.position.y = (rect.height / zoom) * (small ? 0.08 : 0.19) - 2.17;
+      world.current.position.y = (height / zoom) * (small ? 0.08 : 0.19) - 2.17;
     }
 
     // Fora da viewport ou aba oculta: nada de simulação (o View também não desenha)
@@ -484,14 +486,48 @@ function Scene({ motion, sim, viewRef }: Props & { viewRef: RefObject<HTMLElemen
   );
 }
 
-/** Globo-circuito + chip do hero, desenhado no canvas global via View. */
+/** Globo-circuito + chip do hero, desenhado no canvas global (fixo) via View. Desktop com mouse. */
 export default function HeroGlobe({ className, motion, sim }: Props) {
-  const viewRef = useRef<HTMLElement | THREE.Group>(null);
   return (
-    <View ref={viewRef} className={className}>
+    <View className={className}>
       <Suspense fallback={null}>
-        <Scene motion={motion} sim={sim} viewRef={viewRef} />
+        <Scene motion={motion} sim={sim} />
       </Suspense>
     </View>
+  );
+}
+
+/**
+ * Mesma cena num canvas embutido na área do globo, que rola junto com a página. Usado no toque: lá a rolagem é
+ * feita pelo navegador fora da thread do JS, e um canvas fixo (View) fica um frame atrás da página, o que faz o
+ * globo "pular" como mola ao rolar. Embutido, o navegador move o desenho junto com o resto, sem sincronização.
+ * Só existe quando o canvas global não é montado (sem outras cenas 3D), então segue havendo um canvas só.
+ */
+export function HeroGlobeCanvas({ className, motion, sim }: Props) {
+  // Renderiza no ticker do GSAP (como o canvas global), só com o hero visível e a aba ativa
+  useEffect(() => {
+    const tick = (time: number) => {
+      if (sim.current?.active) advance(time);
+    };
+    gsap.ticker.add(tick);
+    return () => gsap.ticker.remove(tick);
+  }, [sim]);
+
+  return (
+    <Canvas
+      className={className}
+      frameloop="never"
+      flat
+      dpr={[1, maxDpr()]}
+      gl={{ alpha: true, antialias: true }}
+      // Os eventos são do palco (div pai): pan-y, arrasto etc.
+      style={{ pointerEvents: "none" }}
+      aria-hidden
+    >
+      <AdaptiveResolution />
+      <Suspense fallback={null}>
+        <Scene motion={motion} sim={sim} />
+      </Suspense>
+    </Canvas>
   );
 }

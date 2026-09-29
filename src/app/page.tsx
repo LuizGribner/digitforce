@@ -112,7 +112,8 @@ export default function Home() {
 
   return (
     <main className="relative overflow-x-clip">
-      {webgl && (
+      {/* Canvas fixo só quando há cenas nele (mouse). No toque o globo do hero usa um canvas embutido */}
+      {enable3D && (
         <CanvasBoundary onError={() => setGlFailed(true)}>
           <SceneCanvas />
         </CanvasBoundary>
@@ -122,7 +123,12 @@ export default function Home() {
       <SiteHeader nav={nav} contactHref={WHATSAPP} />
 
       {/* 1. HERO: globo-circuito 3D interativo com o chip */}
-      <Hero webgl={webgl} cta={<CtaButton>Falar com um especialista</CtaButton>} />
+      <Hero
+        webgl={webgl}
+        globeMode={enable3D ? "view" : "canvas"}
+        onGlError={() => setGlFailed(true)}
+        cta={<CtaButton>Falar com um especialista</CtaButton>}
+      />
 
       {/* 2. RASGO (#sobre): FORÇA rasga e revela o "df" + frase */}
       <TearSection enable3D={enable3D} />

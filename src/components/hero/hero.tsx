@@ -8,10 +8,14 @@ import { Spotlight } from "@/components/ui/spotlight";
 import { createMotion, type Motion } from "@/components/hero-globe/globe-motion";
 import type { GlobeSim } from "@/components/three/hero-globe";
 import { getLenis } from "@/components/providers/smooth-scroll";
+import { CanvasBoundary } from "@/components/three/canvas-boundary";
 import { gsap, SplitText, useGSAP } from "@/lib/gsap";
 import { cn } from "@/lib/utils";
 
 const HeroGlobe = dynamic(() => import("@/components/three/hero-globe"), { ssr: false });
+const HeroGlobeCanvas = dynamic(() => import("@/components/three/hero-globe").then((m) => m.HeroGlobeCanvas), {
+  ssr: false,
+});
 
 const REDUCED = "(prefers-reduced-motion: reduce)";
 function subscribeReduced(cb: () => void) {
@@ -24,7 +28,15 @@ const useReducedMotion = () =>
 
 type Drag = { id: number; x: number; y: number; touch: boolean };
 
-export function Hero({ webgl, cta }: { webgl: boolean; cta: ReactNode }) {
+type HeroProps = {
+  webgl: boolean;
+  /** "view": no canvas global fixo (mouse); "canvas": canvas embutido que rola com a página (toque) */
+  globeMode: "view" | "canvas";
+  onGlError: () => void;
+  cta: ReactNode;
+};
+
+export function Hero({ webgl, globeMode, onGlError, cta }: HeroProps) {
   const section = useRef<HTMLElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const motion = useRef<Motion>(createMotion());
@@ -211,7 +223,14 @@ export function Hero({ webgl, cta }: { webgl: boolean; cta: ReactNode }) {
           }}
         >
           {webgl ? (
-            <HeroGlobe className="pointer-events-none absolute inset-0" motion={motion} sim={sim} />
+            globeMode === "view" ? (
+              <HeroGlobe className="pointer-events-none absolute inset-0" motion={motion} sim={sim} />
+            ) : (
+              <CanvasBoundary onError={onGlError}>
+                {/* O wrapper do canvas ocupa 100% do palco (absolute inset-0) */}
+                <HeroGlobeCanvas motion={motion} sim={sim} />
+              </CanvasBoundary>
+            )
           ) : (
             // Fallback sem WebGL: "df" estático com o brilho roxo
             <div className="absolute inset-0 flex items-center justify-center">

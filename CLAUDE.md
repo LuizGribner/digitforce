@@ -108,6 +108,10 @@ construtoras e hotéis.
 
 ## Mobile / toque
 
+- Canvas fixo + Views só com ponteiro fino (`useEnable3D` inclui `pointer: fine`). No toque a rolagem roda fora da
+  thread do JS e o que é desenhado num canvas fixo fica um frame atrás da página ("pula" ao rolar). Lá o canvas fixo
+  não é montado, as seções usam os fallbacks estáticos e o globo do hero usa `HeroGlobeCanvas` (canvas embutido na
+  área do globo, rola junto com a página; mesma cena, dimensionada por `state.size`).
 - Globo do hero: `touch-action: pan-y` (arrastar para os lados gira, vertical rola a página; o navegador manda
   pointercancel ao assumir o scroll). No toque o Lenis não é pausado e o arrasto é só horizontal.
 - `ScrollTrigger.config({ ignoreMobileResize: true })` (barra de endereço não dispara refresh); alturas em svh.
