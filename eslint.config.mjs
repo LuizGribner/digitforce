@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Componentes de terceiros (Magic UI / Aceternity), mantidos como vieram
+    "src/components/ui/**",
   ]),
 ]);
 

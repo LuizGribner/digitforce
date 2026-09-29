@@ -1,0 +1,564 @@
+/* Digit Force — tokens do manual + ajustes do tema shadcn.
+   Importado no layout.tsx DEPOIS do globals.css, então sobrescreve o preset. */
+
+:root {
+  /* Manual de identidade */
+  --df-navy: #00003a;
+  --df-purple: #5749a5;
+  --df-graphite: #333333;
+  --df-offwhite: #f2f2f2;
+  /* Tint do roxo para texto sobre o navy (o #5749A5 puro tem contraste baixo) */
+  --df-purple-light: #a89cf0;
+  --df-navy-deep: #000024;
+
+  /* Tema shadcn mapeado para a marca */
+  --background: var(--df-navy);
+  --foreground: var(--df-offwhite);
+  --card: #06064a;
+  --card-foreground: var(--df-offwhite);
+  --popover: #06064a;
+  --popover-foreground: var(--df-offwhite);
+  --primary: var(--df-purple);
+  --primary-foreground: #ffffff;
+  --secondary: #11115c;
+  --secondary-foreground: var(--df-offwhite);
+  --muted: #11115c;
+  /* #B9B8D9 (e não #A3A3C2) para manter AA (>= 4.5:1) também sobre o vidro com o feixe do hero atrás */
+  --muted-foreground: #b9b8d9;
+  --accent: #1a1a6e;
+  --accent-foreground: var(--df-offwhite);
+  --border: rgba(168, 156, 240, 0.14);
+  --input: rgba(168, 156, 240, 0.2);
+  --ring: var(--df-purple-light);
+}
+
+/* O fundo fica no html e o body é transparente: assim as manchas de luz (z-index -1) aparecem atrás de tudo.
+   Com o fundo no body, ele seria pintado por cima delas. */
+html {
+  background: var(--df-navy);
+  scroll-behavior: smooth;
+  /* Toque: sem atraso de toque duplo nos botões (o zoom com pinça continua) e sem o flash cinza do iOS */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: transparent;
+  color: var(--df-offwhite);
+}
+
+/* Com o Lenis ativo (classe no html), o smooth nativo sai de cena para não brigar com ele */
+html.lenis {
+  scroll-behavior: auto;
+}
+
+/* Toque: retorno visual ao tocar em links e botões (substitui o flash cinza do iOS; hover não existe no toque).
+   Nos cards da órbita a opacidade é do GSAP (inline), então esta regra não interfere neles. */
+@media (hover: none) {
+  a:active,
+  button:active {
+    opacity: 0.8;
+  }
+}
+
+/* Âncoras param abaixo do header fixo */
+section[id] {
+  scroll-margin-top: 6rem;
+}
+
+::selection {
+  background: var(--df-purple);
+  color: #fff;
+}
+
+/* Título em gradiente (padrão Gems) */
+.df-gradient-text {
+  background: linear-gradient(90deg, #c4bbff, var(--df-purple-light) 50%, #7c6fd6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  /* Cada linha recebe o gradiente inteiro quando o título quebra */
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* Glow radial atrás de objetos (hero, anel do manifesto) */
+.df-glow {
+  background: radial-gradient(closest-side, rgba(87, 73, 165, 0.55), transparent);
+  filter: blur(40px);
+}
+
+/* ---------------------------------------------------------------------------------------------
+   Liquid glass
+   .glass (padrão), .glass-strong (header, painéis) e .glass-subtle (cards grandes).
+   Em @layer components para os utilitários do Tailwind (fixed, absolute, rounded-*, etc.) vencerem.
+   A refração (filtro SVG #df-glass-refraction no backdrop-filter) só entra com html.glass-refraction,
+   classe adicionada via JS apenas no Chromium (components/glass-filter.tsx). Safari e Firefox ficam
+   no vidro com blur normal.
+   --------------------------------------------------------------------------------------------- */
+@layer components {
+  .glass,
+  .glass-strong,
+  .glass-subtle {
+    --glass-tint: rgba(10, 10, 72, 0.55);
+    --glass-blur: 16px;
+    --glass-saturate: 160%;
+    /* Exposto como variável para componentes com background inline (ex.: MagicCard) poderem usá-lo */
+    --glass-bg: linear-gradient(180deg, rgba(168, 156, 240, 0.1), rgba(87, 73, 165, 0.04) 60%), var(--glass-tint);
+    position: relative;
+    isolation: isolate;
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    box-shadow:
+      /* highlight interno: luz batendo na borda de cima, sombra na de baixo */
+      inset 0 1px 0 rgba(255, 255, 255, 0.14),
+      inset 0 -1px 0 rgba(0, 0, 36, 0.35),
+      inset 0 0 24px rgba(168, 156, 240, 0.05),
+      /* sombra externa suave */
+      0 12px 32px -12px rgba(0, 0, 20, 0.65);
+  }
+
+  /* Borda de 1px em gradiente: clara no topo, escura embaixo */
+  .glass::before,
+  .glass-strong::before,
+  .glass-subtle::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.34),
+      rgba(168, 156, 240, 0.14) 45%,
+      rgba(0, 0, 40, 0.4)
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .glass-strong {
+    --glass-tint: rgba(10, 10, 72, 0.7);
+    --glass-blur: 24px;
+    --glass-saturate: 180%;
+  }
+
+  .glass-subtle {
+    --glass-tint: rgba(10, 10, 72, 0.45);
+    --glass-blur: 12px;
+    --glass-saturate: 140%;
+  }
+
+  /* Refração estilo Apple Liquid Glass (só Chromium). Fica fora do .glass-subtle: nos cards grandes o
+     displacement custa caro a cada frame e quase não aparece. */
+  .glass-refraction .glass,
+  .glass-refraction .glass-strong {
+    -webkit-backdrop-filter: url(#df-glass-refraction) blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    backdrop-filter: url(#df-glass-refraction) blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  }
+}
+
+/* Sem suporte a backdrop-filter o vidro vira um painel mais opaco, para o texto manter contraste */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass,
+  .glass-strong,
+  .glass-subtle {
+    --glass-tint: rgba(10, 10, 72, 0.9);
+  }
+}
+
+/* Manchas de luz atrás de tudo (inclusive do canvas 3D), para o vidro ter o que desfocar.
+   radial-gradient em vez de filter: blur, que custaria caro em elementos desse tamanho. */
+.df-ambient {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.df-ambient span {
+  position: absolute;
+  border-radius: 9999px;
+  will-change: transform;
+  animation: df-drift 60s ease-in-out infinite alternate;
+}
+
+.df-ambient span:nth-child(1) {
+  top: -15vh;
+  left: -10vw;
+  width: 60vw;
+  height: 60vw;
+  background: radial-gradient(closest-side, rgba(87, 73, 165, 0.35), transparent);
+}
+
+.df-ambient span:nth-child(2) {
+  top: 30vh;
+  right: -15vw;
+  width: 55vw;
+  height: 55vw;
+  background: radial-gradient(closest-side, rgba(168, 156, 240, 0.2), transparent);
+  animation-duration: 75s;
+  animation-direction: alternate-reverse;
+}
+
+.df-ambient span:nth-child(3) {
+  bottom: -25vh;
+  left: 15vw;
+  width: 65vw;
+  height: 65vw;
+  background: radial-gradient(closest-side, rgba(87, 73, 165, 0.3), transparent);
+  animation-duration: 90s;
+}
+
+.df-ambient span:nth-child(4) {
+  top: 10vh;
+  left: 40vw;
+  width: 35vw;
+  height: 35vw;
+  background: radial-gradient(closest-side, rgba(168, 156, 240, 0.14), transparent);
+  animation-duration: 55s;
+  animation-direction: alternate-reverse;
+}
+
+@keyframes df-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(6vw, 4vh, 0) scale(1.08);
+  }
+  100% {
+    transform: translate3d(-4vw, 8vh, 0) scale(0.95);
+  }
+}
+
+/* ---------------------------------------------------------------------------------------------
+   Seção do rasgo (#sobre) — components/tear/
+   Duas camadas sticky no lugar de um pin único: a de baixo (z 1) fica abaixo do canvas 3D fixo (z 5), a das
+   metades (z 10) fica acima. Assim o "df" 3D aparece entre o fundo e o papel. Um pin (position: fixed) criaria
+   um único stacking context para a seção inteira e impediria essa separação.
+   Regra: filtros SVG só em elementos estáticos. Nunca animar atributos de filtro; animar só transform/opacity.
+   Padrão (e reduced motion): estado final, sem metades e sem scroll extra.
+   --------------------------------------------------------------------------------------------- */
+.tear {
+  position: relative;
+}
+
+.tear-under {
+  position: relative;
+  z-index: 1;
+  height: 100svh;
+  overflow: clip;
+  background: #000024;
+}
+
+.tear-under-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 58% 52% at 50% 44%,
+    rgba(87, 73, 165, 0.6),
+    rgba(87, 73, 165, 0.14) 48%,
+    transparent 72%
+  );
+}
+
+.tear-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.tear-reveal {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(1rem, 2.6svh, 2rem);
+  padding: 0 1.5rem;
+  text-align: center;
+}
+
+.tear-mark-box {
+  position: relative;
+  width: min(40svh, 360px, 70vw);
+  aspect-ratio: 1;
+}
+
+.tear-logo {
+  width: min(58vw, 300px);
+  height: auto;
+}
+
+.tear-phrase {
+  max-width: 30ch;
+  font-size: clamp(1.1rem, 2.1vw, 1.7rem);
+  font-weight: 500;
+  line-height: 1.35;
+  color: rgba(242, 242, 242, 0.85);
+}
+
+.tear-halves {
+  display: none;
+}
+
+.tear-half {
+  /* Maior que a viewport: rotacionar e inclinar sem expor os cantos */
+  position: absolute;
+  inset: calc(-1 * var(--tear-my)) calc(-1 * var(--tear-mx));
+  transform-origin: 50% 50%;
+}
+
+.tear-paper {
+  position: absolute;
+  inset: 0;
+  background: var(--df-navy);
+}
+
+.tear-content {
+  position: absolute;
+  top: var(--tear-my);
+  right: var(--tear-mx);
+  bottom: var(--tear-my);
+  left: var(--tear-mx);
+}
+
+/* Mesmas proporções de tear-geometry.ts: 90% da largura, centralizada (margin-top em % é relativo à largura) */
+.tear-word-wrap {
+  position: absolute;
+  top: 50%;
+  left: 5%;
+  width: 90%;
+  margin-top: -12.375%;
+}
+
+.tear-word {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.tear-label {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  margin-bottom: clamp(0.5rem, 1.6vw, 1.75rem);
+  padding-left: 0.42em;
+  font-size: clamp(0.62rem, 1vw, 0.9rem);
+  font-weight: 700;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  color: var(--df-purple-light);
+}
+
+/* Grão do papel: tile pré-renderizado (filtro dentro do SVG, rasterizado uma vez pelo navegador) */
+.tear-grain {
+  position: absolute;
+  inset: 0;
+  background-image: url("/assets/textures/paper-grain.svg");
+  background-size: 200px 200px;
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+.tear-band,
+.tear-shadow {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tear {
+    height: 350svh;
+  }
+
+  .tear-under {
+    position: sticky;
+    top: 0;
+  }
+
+  .tear-halves {
+    --tear-mx: 12vw;
+    --tear-my: 15svh;
+    display: block;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    height: 100svh;
+    margin-top: -100svh;
+    overflow: clip;
+    pointer-events: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) and (min-width: 768px) {
+  .tear {
+    height: 450svh;
+  }
+}
+
+/* ---------------------------------------------------------------------------------------------
+   Órbita de integrações (#solucoes) — components/sections/integrations-orbit.tsx
+   Três camadas sticky no lugar de um pin: fundo (z 4: brilho, pulso) < canvas 3D (z 5: o "df") < cards (z 8) <
+   texto e linha de luz (z 10). Assim o "df" fica atrás de todos os cards e o texto acima de tudo.
+   Geometria (zonas, elipse, escala) em orbit-layout.ts. Sem scroll extra com reduced motion (estado final).
+   --------------------------------------------------------------------------------------------- */
+.orbit {
+  --card-w: 32vw;
+  position: relative;
+}
+
+.orbit-bg,
+.orbit-cards,
+.orbit-top {
+  position: relative;
+  height: 100svh;
+  overflow: clip;
+}
+
+.orbit-bg {
+  z-index: 4;
+  pointer-events: none;
+}
+
+.orbit-cards {
+  z-index: 8;
+  margin-top: -100svh;
+}
+
+.orbit-top {
+  z-index: 10;
+  margin-top: -100svh;
+  pointer-events: none;
+}
+
+.orbit-card {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--card-w);
+  aspect-ratio: 3 / 4;
+  margin-left: calc(var(--card-w) / -2);
+  margin-top: calc(var(--card-w) * -2 / 3);
+  cursor: pointer;
+}
+
+/* Parte de trás da elipse: leve blur (troca de estado só ao cruzar o limite, não por frame) */
+.orbit-card-body {
+  transition: filter 0.4s ease;
+}
+.orbit-card[data-back="true"] .orbit-card-body {
+  filter: blur(1.5px);
+}
+
+.orbit-tip {
+  bottom: 100%;
+  margin-bottom: 0.75rem;
+}
+.orbit-card[data-tip="below"] .orbit-tip {
+  top: 100%;
+  bottom: auto;
+  margin: 0.75rem 0 0;
+}
+
+/* Cards se movem a cada frame: blur normal, sem a refração (custosa em várias camadas animadas) */
+@layer components {
+  .glass-refraction .orbit-card.glass {
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  }
+
+  /* Toque (celular/tablet): sem backdrop-filter nos cards que se movem a cada frame; o fundo atrás deles é o navy
+     liso, então um vidro um pouco mais opaco dá o mesmo visual sem recalcular blur por frame */
+  @media (pointer: coarse) {
+    .orbit-card.glass,
+    .glass-refraction .orbit-card.glass {
+      --glass-tint: rgba(12, 12, 78, 0.82);
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+  }
+}
+
+@media (min-width: 768px) {
+  .orbit {
+    --card-w: min(17vw, 170px);
+  }
+}
+
+@media (min-width: 1024px) {
+  .orbit {
+    --card-w: min(15vw, 210px);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .orbit {
+    height: 250svh;
+  }
+
+  .orbit-bg,
+  .orbit-cards,
+  .orbit-top {
+    position: sticky;
+    top: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) and (min-width: 768px) {
+  .orbit {
+    height: 350svh;
+  }
+}
+
+/* Toque (celular/tablet): seções fixadas mais curtas, para uma passada de dedo cair dentro delas; o snap
+   direcional (tear-section / integrations-orbit) completa a abertura. Vem depois das regras por largura. */
+@media (prefers-reduced-motion: no-preference) and (pointer: coarse) {
+  .tear {
+    height: 220svh;
+  }
+  .orbit {
+    height: 200svh;
+  }
+}
+
+/* Animação exigida pelo Spotlight da Aceternity */
+@keyframes spotlight {
+  0% {
+    opacity: 0;
+    transform: translate(-72%, -62%) scale(0.5);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -40%) scale(1);
+  }
+}
+.animate-spotlight {
+  animation: spotlight 2s ease 0.75s 1 forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .animate-spotlight {
+    animation: none;
+    opacity: 1;
+  }
+  .df-ambient span {
+    animation: none;
+  }
+}

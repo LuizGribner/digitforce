@@ -1,0 +1,8 @@
+/* Digit Force — tokens do manual de identidade */
+:root{
+  --df-navy:#00003A;     /* azul profundo — fundo */
+  --df-purple:#5749A5;   /* roxo tecnológico — destaque/glow */
+  --df-graphite:#333333; /* cinza grafite */
+  --df-offwhite:#F2F2F2; /* branco suave */
+  --df-font:'Montserrat',system-ui,sans-serif;
+}
