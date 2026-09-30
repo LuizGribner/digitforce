@@ -17,6 +17,9 @@ import { SiteHeader } from "@/components/site-header";
 import { TearSection } from "@/components/tear/tear-section";
 import { ProofStrip } from "@/components/sections/proof-strip";
 import { IntegrationsOrbit } from "@/components/sections/integrations-orbit";
+import { Manifesto } from "@/components/sections/manifesto";
+import { HeroStatic, OrbitStatic, TearStatic } from "@/components/sections/static-fallbacks";
+import { SectionBoundary } from "@/components/section-boundary";
 import { AthpaceVideo } from "@/components/athpace-video";
 import { AthpaceStats } from "@/components/sections/athpace-stats";
 
@@ -28,7 +31,6 @@ import type { ProductKind } from "@/components/three/product-model";
 
 // Um único <Canvas> fixo; as seções só renderizam <View>s que desenham nele
 const SceneCanvas = dynamic(() => import("@/components/three/scene-canvas"), { ssr: false });
-const ManifestoRing = dynamic(() => import("@/components/three/manifesto-ring"), { ssr: false });
 const ProductModel = dynamic(() => import("@/components/three/product-model"), { ssr: false });
 
 // TODO: trocar pelo WhatsApp e e-mail reais do Mateus
@@ -67,19 +69,19 @@ const products: { id: ProductKind; title: string; text: string; img: string; vid
     id: "interfones",
     title: "Interfonia digital 2 fios",
     text: "Monitor interno e unidade externa com vídeo, sobre a fiação existente. Ideal para retrofit sem quebra-quebra.",
-    img: `${A}/produtos/interfone/unidade-externa-frente.webp`,
+    img: `${A}/produtos/interfone/unidade-externa-frente-sm.webp`,
   },
   {
     id: "elevadores",
     title: "Emergência para elevadores",
     text: "Comunicação da cabine com a central, gateway para casa de máquinas e monitoramento remoto.",
-    img: `${A}/produtos/elevador/intercomunicador-cabine-a.webp`,
+    img: `${A}/produtos/elevador/intercomunicador-cabine-a-sm.webp`,
   },
   {
     id: "athpace",
     title: "Athpace: IA para hotelaria",
     text: "Assistente de voz multilíngue no quarto, integrado ao PMS, com dados em servidor local.",
-    img: `${A}/produtos/interfone/monitor-interno-frente-tela-ligada.webp`, // TODO: trocar pela foto do speaker Athpace
+    img: `${A}/produtos/interfone/monitor-interno-frente-tela-ligada-sm.webp`, // TODO: trocar pela foto do speaker Athpace
     videoHref: "#athpace",
   },
 ];
@@ -108,7 +110,6 @@ export default function Home() {
   const [glFailed, setGlFailed] = useState(false);
   const webgl = webglSupported && !glFailed;
   const enable3D = useEnable3D() && webgl;
-  const manifestoRef = useRef<HTMLElement>(null);
 
   return (
     <main className="relative overflow-x-clip">
@@ -123,21 +124,27 @@ export default function Home() {
       <SiteHeader nav={nav} contactHref={WHATSAPP} />
 
       {/* 1. HERO: globo-circuito 3D interativo com o chip */}
-      <Hero
-        webgl={webgl}
-        globeMode={enable3D ? "view" : "canvas"}
-        onGlError={() => setGlFailed(true)}
-        cta={<CtaButton>Falar com um especialista</CtaButton>}
-      />
+      <SectionBoundary name="hero" fallback={<HeroStatic cta={<CtaButton>Falar com um especialista</CtaButton>} />}>
+        <Hero
+          webgl={webgl}
+          globeMode={enable3D ? "view" : "canvas"}
+          onGlError={() => setGlFailed(true)}
+          cta={<CtaButton>Falar com um especialista</CtaButton>}
+        />
+      </SectionBoundary>
 
       {/* 2. RASGO (#sobre): FORÇA rasga e revela o "df" + frase */}
-      <TearSection enable3D={enable3D} />
+      <SectionBoundary name="rasgo" fallback={<TearStatic />}>
+        <TearSection enable3D={enable3D} />
+      </SectionBoundary>
 
       {/* 3. NÚMEROS E PILARES (faixa compacta) */}
       <ProofStrip />
 
       {/* 4. INTEGRAÇÕES: cards em órbita guiada pelo scroll, "df" no centro */}
-      <IntegrationsOrbit enable3D={enable3D} />
+      <SectionBoundary name="integrações" fallback={<OrbitStatic />}>
+        <IntegrationsOrbit enable3D={enable3D} />
+      </SectionBoundary>
 
       {/* 5. PRODUTOS */}
       <section id="produtos" className="py-20">
@@ -192,28 +199,9 @@ export default function Home() {
       </section>
 
       {/* 6. MANIFESTO (anel com o "df") */}
-      <section ref={manifestoRef} className="py-20">
-        <Container className="grid items-center gap-12 md:grid-cols-2">
-          <div>
-            <h2 className="max-w-md text-balance text-3xl font-semibold leading-tight md:text-4xl">
-              Uma força digital construída <span className="df-gradient-text">para impulsionar o futuro</span>
-            </h2>
-            <p className="mt-4 max-w-md text-sm text-[var(--muted-foreground)]">
-              Acreditamos que tecnologia precisa empoderar, simplificar, proteger e evoluir junto com o mundo.
-            </p>
-          </div>
-          <div className="relative mx-auto flex h-80 w-80 items-center justify-center">
-            <div className="df-glow absolute inset-0" />
-            {enable3D ? (
-              <ManifestoRing className="absolute inset-0" sectionRef={manifestoRef} />
-            ) : (
-              <div className="relative flex h-72 w-72 items-center justify-center rounded-full border border-[var(--border)]">
-                <Image src={`${A}/logo/df-monogram-roxo.svg`} alt="" width={120} height={101} />
-              </div>
-            )}
-          </div>
-        </Container>
-      </section>
+      <SectionBoundary name="manifesto" fallback={<Manifesto enable3D={false} />}>
+        <Manifesto enable3D={enable3D} />
+      </SectionBoundary>
 
       {/* 7. CTA */}
       <section id="contato" className="py-20">

@@ -15,17 +15,31 @@ const P = "/assets/produtos";
 
 type Card = { id: string; name: string; text: string; img: string; mobileHidden?: boolean };
 
-// Ordem da órbita; todos com foto. TODO: revisar as frases curtas com o cliente
-const CARDS: Card[] = [
-  { id: "interfone", name: "Interfone", img: `${P}/interfone/unidade-externa-frente.webp`, text: "Vídeo e áudio na portaria, sobre os 2 fios que o prédio já tem." },
-  { id: "monitor", name: "Monitor interno", img: `${P}/interfone/monitor-interno-frente-tela-ligada.webp`, text: "Atende a portaria e libera o acesso de dentro do apartamento." },
-  { id: "app", name: "App do morador", img: `${P}/elevador/app-tela.webp`, text: "Chamadas e avisos no celular, de onde o morador estiver." },
+// Ordem da órbita; todos com foto. Versões "-sm" (640px): o card mostra no máximo ~220px e a original de até 1600px
+// custava até 7,5MB de memória decodificada por imagem no celular. TODO: revisar as frases curtas com o cliente
+export const CARDS: Card[] = [
+  { id: "interfone", name: "Interfone", img: `${P}/interfone/unidade-externa-frente-sm.webp`, text: "Vídeo e áudio na portaria, sobre os 2 fios que o prédio já tem." },
+  { id: "monitor", name: "Monitor interno", img: `${P}/interfone/monitor-interno-frente-tela-ligada-sm.webp`, text: "Atende a portaria e libera o acesso de dentro do apartamento." },
+  { id: "app", name: "App do morador", img: `${P}/elevador/app-tela-sm.webp`, text: "Chamadas e avisos no celular, de onde o morador estiver." },
   { id: "camera", name: "Câmera", img: `${P}/elevador/camera-luz-teto.webp`, text: "Imagem da cabine e das áreas comuns no mesmo ecossistema." },
-  { id: "elevador", name: "Elevador", img: `${P}/elevador/intercomunicador-cabine-a.webp`, text: "A cabine fala direto com a central numa emergência." },
+  { id: "elevador", name: "Elevador", img: `${P}/elevador/intercomunicador-cabine-a-sm.webp`, text: "A cabine fala direto com a central numa emergência." },
   { id: "botao", name: "Botão de emergência", img: `${P}/elevador/botao-emergencia.webp`, text: "Um toque abre o chamado e avisa a equipe certa." },
-  { id: "terminal", name: "Terminal de monitoramento", img: `${P}/elevador/terminal-monitoramento.webp`, text: "Chamados e alarmes de todo o prédio numa tela só.", mobileHidden: true },
-  { id: "sensor", name: "Sensor", img: `${P}/elevador/sensor.webp`, text: "Temperatura e umidade da casa de máquinas no monitoramento.", mobileHidden: true },
+  { id: "terminal", name: "Terminal de monitoramento", img: `${P}/elevador/terminal-monitoramento-sm.webp`, text: "Chamados e alarmes de todo o prédio numa tela só.", mobileHidden: true },
+  { id: "sensor", name: "Sensor", img: `${P}/elevador/sensor-sm.webp`, text: "Temperatura e umidade da casa de máquinas no monitoramento.", mobileHidden: true },
 ];
+
+/**
+ * quickSetter não aceita aliases que viram várias propriedades ("scale" -> "scaleX,scaleY", "autoAlpha"): cai no
+ * setAttribute("scaleX,scaleY") e derruba a página. Escala uniforme = dois setters.
+ */
+const scaleSetter = (el: Element) => {
+  const sx = gsap.quickSetter(el, "scaleX");
+  const sy = gsap.quickSetter(el, "scaleY");
+  return (v: number) => {
+    sx(v);
+    sy(v);
+  };
+};
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 const inOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
@@ -94,14 +108,14 @@ export function IntegrationsOrbit({ enable3D }: { enable3D: boolean }) {
             x: gsap.quickSetter(el, "x", "px"),
             y: gsap.quickSetter(el, "y", "px"),
             r: gsap.quickSetter(el, "rotation", "deg"),
-            s: gsap.quickSetter(el, "scale"),
+            s: scaleSetter(el),
             o: gsap.quickSetter(el, "opacity"),
             z: gsap.quickSetter(el, "zIndex"),
           }));
           const back = new Array(n).fill(false);
           const setText = { o: gsap.quickSetter(text, "opacity"), y: gsap.quickSetter(text, "y", "px") };
-          const setGlow = { o: gsap.quickSetter(glow, "opacity"), s: gsap.quickSetter(glow, "scale") };
-          const setFallback = fallback ? { o: gsap.quickSetter(fallback, "opacity"), s: gsap.quickSetter(fallback, "scale") } : null;
+          const setGlow = { o: gsap.quickSetter(glow, "opacity"), s: scaleSetter(glow) };
+          const setFallback = fallback ? { o: gsap.quickSetter(fallback, "opacity"), s: scaleSetter(fallback) } : null;
 
           const st = { p: motion ? 0 : 1, spin: 0, cardW: 1, cardH: 1 };
           let L: OrbitLayout = { W: 1, H: 1, cy: 0, rx: 0, ry: 0, k: 1, zoneTop: 0, bottom: 1 };

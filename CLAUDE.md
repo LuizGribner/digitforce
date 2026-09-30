@@ -78,6 +78,11 @@ construtoras e hotéis.
   o `scroll-margin-top`). Desligado com prefers-reduced-motion. `ScrollTrigger.refresh()` após fontes e `load`.
 - O canvas 3D usa `frameloop="never"` e `advance()` no mesmo ticker, depois do Lenis: os Views leem o scroll do
   próprio frame (sem atraso de um frame em relação ao DOM).
+- `gsap.quickSetter` não aceita aliases que viram várias propriedades ("scale" -> "scaleX,scaleY", "autoAlpha"):
+  cai no setAttribute e derruba a página. Escala uniforme = dois setters (`scaleSetter` em integrations-orbit.tsx).
+- Cada seção animada (hero, rasgo, órbita, manifesto) fica dentro de um `SectionBoundary`
+  (`src/components/section-boundary.tsx`): se quebrar, mostra a versão estática
+  (`sections/static-fallbacks.tsx`, `<Manifesto enable3D={false} />`) em vez de derrubar a página.
 - Regra: filtros SVG/CSS só em elementos estáticos. Nunca animar atributos de filtro; animar só transform e opacity.
   Geometria (paths, clip-paths, regiões de filtro) pode ser recalculada no resize, nunca por frame.
 - Seção do rasgo (#sobre, `src/components/tear/`): caminho procedural determinístico em `tear-geometry.ts` (fonte
@@ -112,6 +117,10 @@ construtoras e hotéis.
   thread do JS e o que é desenhado num canvas fixo fica um frame atrás da página ("pula" ao rolar). Lá o canvas fixo
   não é montado, as seções usam os fallbacks estáticos e o globo do hero usa `HeroGlobeCanvas` (canvas embutido na
   área do globo, rola junto com a página; mesma cena, dimensionada por `state.size`).
+- Memória no celular ("This page couldn't load" = aba derrubada por falta de memória): o Spotlight da Aceternity
+  (SVG com blur de raio 151) só aparece com mouse; no toque entra `.hero-spotlight-css` (gradiente). Metades do
+  rasgo com margens menores no toque. Cards (órbita e fallbacks de produto) usam fotos `-sm.webp` (640px); as
+  originais ficam para as texturas 3D. Evitar filtros SVG/blur grandes e imagens decodificadas acima do necessário.
 - Globo do hero: `touch-action: pan-y` (arrastar para os lados gira, vertical rola a página; o navegador manda
   pointercancel ao assumir o scroll). No toque o Lenis não é pausado e o arrasto é só horizontal.
 - `ScrollTrigger.config({ ignoreMobileResize: true })` (barra de endereço não dispara refresh); alturas em svh.

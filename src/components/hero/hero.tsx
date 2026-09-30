@@ -135,7 +135,10 @@ export function Hero({ webgl, globeMode, onGlError, cta }: HeroProps) {
 
   return (
     <section ref={section} aria-labelledby="hero-title" className="relative overflow-hidden lg:h-[100svh] lg:min-h-[680px]">
-      <Spotlight className="-top-40 left-0 md:-top-20 md:left-60" fill="#A89CF0" />
+      {/* Spotlight (SVG com blur de raio 151, animado) só com mouse. No toque ele virava ~9 megapixels filtrados no
+          primeiro frame e derrubava a aba em celulares mais fracos; lá entra um brilho equivalente em gradiente CSS */}
+      <Spotlight className="hero-spotlight-svg -top-40 left-0 md:-top-20 md:left-60" fill="#A89CF0" />
+      <div aria-hidden className="hero-spotlight-css pointer-events-none absolute -left-1/4 -top-24 h-[70%] w-[150%]" />
 
       {/* Coluna de texto (z-10, acima do canvas) */}
       <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col px-6 pt-32 lg:h-full lg:justify-center lg:pt-10">

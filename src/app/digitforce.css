@@ -535,6 +535,26 @@ section[id] {
   }
 }
 
+/* Spotlight do hero: SVG (filtro pesado) só com mouse; no toque, brilho diagonal em gradiente (sem filtro) */
+.hero-spotlight-css {
+  display: none;
+  background: radial-gradient(ellipse 45% 22% at 50% 50%, rgba(168, 156, 240, 0.16), transparent 70%);
+  transform: rotate(35deg);
+}
+@media (pointer: coarse) {
+  .hero-spotlight-svg {
+    display: none;
+  }
+  .hero-spotlight-css {
+    display: block;
+  }
+  /* Rasgo: metades só um pouco maiores que a tela (a rotação no celular é pequena); menos pixels por camada */
+  .tear-halves {
+    --tear-mx: 6vw;
+    --tear-my: 7svh;
+  }
+}
+
 /* Animação exigida pelo Spotlight da Aceternity */
 @keyframes spotlight {
   0% {
