@@ -11,6 +11,7 @@ import { getLenis } from "@/components/providers/smooth-scroll";
 import { CanvasBoundary } from "@/components/three/canvas-boundary";
 import { gsap, SplitText, useGSAP } from "@/lib/gsap";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/i18n/provider";
 
 const HeroGlobe = dynamic(() => import("@/components/three/hero-globe"), { ssr: false });
 const HeroGlobeCanvas = dynamic(() => import("@/components/three/hero-globe").then((m) => m.HeroGlobeCanvas), {
@@ -37,6 +38,7 @@ type HeroProps = {
 };
 
 export function Hero({ webgl, globeMode, onGlError, cta }: HeroProps) {
+  const { t } = useI18n();
   const section = useRef<HTMLElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const motion = useRef<Motion>(createMotion());
@@ -131,7 +133,7 @@ export function Hero({ webgl, globeMode, onGlError, cta }: HeroProps) {
     { scope: section },
   );
 
-  const caption = !auto ? "Aperte girar para continuar" : dragging ? "Força que protege." : "Arraste para girar";
+  const caption = t(!auto ? "hero.caption.paused" : dragging ? "hero.caption.dragging" : "hero.caption.idle");
 
   return (
     <section ref={section} aria-labelledby="hero-title" className="relative overflow-hidden lg:h-[100svh] lg:min-h-[680px]">
@@ -142,19 +144,18 @@ export function Hero({ webgl, globeMode, onGlError, cta }: HeroProps) {
 
       {/* Coluna de texto (z-10, acima do canvas) */}
       <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col px-6 pt-32 lg:h-full lg:justify-center lg:pt-10">
-        <div className="lg:w-[45%]">
+        <div className="lg:w-[48%]">
           <h1
             id="hero-title"
             data-split
             className="text-[2.6rem] font-bold leading-[1.04] tracking-tight sm:text-6xl lg:text-[clamp(3.5rem,5vw,5.25rem)]"
           >
-            Tecnologia que conecta.
+            {t("hero.titleA")}
             <br />
-            <span className="df-gradient-text">Força que protege.</span>
+            <span className="df-gradient-text">{t("hero.titleB")}</span>
           </h1>
           <p data-split className="mt-6 max-w-md text-[var(--muted-foreground)] md:text-lg">
-            Interfonia digital, emergência para elevadores e IA para hotelaria. Do chip à integração, com suporte técnico no
-            Brasil.
+            {t("hero.lead")}
           </p>
           <div data-reveal className="mt-9 flex">
             {cta}
@@ -168,8 +169,8 @@ export function Hero({ webgl, globeMode, onGlError, cta }: HeroProps) {
           ref={stage}
           tabIndex={0}
           role="group"
-          aria-roledescription="globo 3D interativo"
-          aria-label="Girar o globo em 3D"
+          aria-roledescription={t("hero.globeRole")}
+          aria-label={t("hero.globeLabel")}
           aria-describedby="globe-instructions"
           className={cn(
             // pan-y: no toque, arrastar para os lados gira o globo e na vertical a página rola normalmente
@@ -261,9 +262,7 @@ export function Hero({ webgl, globeMode, onGlError, cta }: HeroProps) {
       </div>
 
       <p id="globe-instructions" className="sr-only">
-        Arraste em qualquer direção, ou use as setas do teclado, para girar o globo 3D. A barra de espaço pausa o globo e o
-        chip se vira para você; aperte de novo para voltar a girar. Em telas de toque, arraste para os lados para girar; na
-        vertical, a página rola normalmente.
+        {t("hero.instructions")}
       </p>
 
       {/* Esconde o corte reto do globo na base do hero (acima do canvas, abaixo do texto) */}
@@ -274,14 +273,15 @@ export function Hero({ webgl, globeMode, onGlError, cta }: HeroProps) {
         <div className="mx-auto flex w-full max-w-6xl items-end justify-between px-6 pb-6 text-[11px] leading-relaxed text-[#A3A3C2] lg:pb-8 lg:text-xs">
           <p>
             <span className="mb-3 block h-px w-6 bg-[#A3A3C2]/60" />
-            Do chip
-            <br />à integração
+            {t("hero.footLeftA")}
+            <br />
+            {t("hero.footLeftB")}
           </p>
           <button
             type="button"
             onClick={toggleMotion}
             aria-pressed={!auto}
-            aria-label={auto ? "Pausar o globo" : "Girar o globo"}
+            aria-label={t(auto ? "hero.pauseLabel" : "hero.playLabel")}
             // Alvo de toque de pelo menos 44px
             className="pointer-events-auto flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-full px-3 py-2 opacity-80 transition-opacity hover:opacity-100 focus-visible:opacity-100"
           >
@@ -294,12 +294,12 @@ export function Hero({ webgl, globeMode, onGlError, cta }: HeroProps) {
                 <path d="m7 4 8 6-8 6Z" fill="currentColor" />
               </svg>
             )}
-            <span>{auto ? "Pausar" : "Girar"}</span>
+            <span>{t(auto ? "hero.pause" : "hero.play")}</span>
           </button>
           <p className="text-right">
-            Suporte técnico
+            {t("hero.footRightA")}
             <br />
-            no Brasil
+            {t("hero.footRightB")}
           </p>
         </div>
       </div>

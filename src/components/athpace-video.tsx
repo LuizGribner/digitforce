@@ -3,13 +3,20 @@
 import { useRef, useState } from "react";
 import { Play } from "lucide-react";
 
+import type { Locale } from "@/i18n/config";
+import { useI18n } from "@/i18n/provider";
+
 const V = "/assets/video";
 
+export type SubtitleTrack = { locale: Locale; srcLang: string; label: string; src: string };
+
 /**
- * Player do vídeo do Athpace. preload="none": só o poster carrega; o vídeo começa a baixar no clique do play.
- * Depois do clique toca com som e com os controles nativos.
+ * Player do vídeo do Athpace (o mesmo nos 3 idiomas; narração em pt-BR). preload="none": só o poster carrega; o
+ * vídeo começa a baixar no clique do play. Depois do clique toca com som e com os controles nativos.
+ * Legendas: um <track> por arquivo existente (ver page.tsx); a do idioma da página vem ligada por padrão.
  */
-export function AthpaceVideo() {
+export function AthpaceVideo({ subtitles = [] }: { subtitles?: SubtitleTrack[] }) {
+  const { locale, t } = useI18n();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [started, setStarted] = useState(false);
 
@@ -28,18 +35,29 @@ export function AthpaceVideo() {
           preload="none"
           playsInline
           controls={started}
-          aria-label="Vídeo de apresentação do Athpace"
+          aria-label={t("athpace.video.label")}
         >
           {/* A primeira source cujo media bate é a usada: 720p no mobile, 1080p no resto */}
           <source src={`${V}/athpace-720.mp4`} type="video/mp4" media="(max-width: 767px)" />
           <source src={`${V}/athpace-1080.mp4`} type="video/mp4" />
+          {subtitles.map((s) => (
+            <track
+              key={s.src}
+              kind="subtitles"
+              src={s.src}
+              srcLang={s.srcLang}
+              label={s.label}
+              default={s.locale === locale}
+            />
+          ))}
+          {t("athpace.video.unsupported")}
         </video>
 
         {!started && (
           <button
             type="button"
             onClick={play}
-            aria-label="Reproduzir o vídeo do Athpace"
+            aria-label={t("athpace.video.play")}
             className="group absolute inset-0 flex items-center justify-center bg-[radial-gradient(closest-side,rgba(0,0,36,0.35),transparent)]"
           >
             <span className="glass-strong flex h-20 w-20 items-center justify-center rounded-full transition-transform duration-300 group-hover:scale-105 md:h-24 md:w-24">

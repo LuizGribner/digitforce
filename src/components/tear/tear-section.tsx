@@ -15,13 +15,18 @@ import {
   yRange,
 } from "./tear-geometry";
 import { tearState } from "./tear-state";
+import { useI18n } from "@/i18n/provider";
 
 const TearMark = dynamic(() => import("@/components/three/tear-mark"), { ssr: false });
 
 type Half = "top" | "bottom";
 
-/** A palavra num SVG de viewBox fixo: escala idêntica em qualquer tela e casa com a geometria do rasgo. */
-function Word() {
+/**
+ * A palavra num SVG de viewBox fixo: escala idêntica em qualquer tela e casa com a geometria do rasgo.
+ * textLength estica/aperta o espaçamento para a palavra de qualquer idioma (FORCE, FORÇA) ocupar a mesma caixa, então
+ * viewBox, clip-paths e o caminho do rasgo valem para todas.
+ */
+function Word({ text }: { text: string }) {
   return (
     <svg className="tear-word" viewBox={`0 0 ${WORD.vbW} ${WORD.vbH}`} aria-hidden>
       <text
@@ -34,7 +39,7 @@ function Word() {
         fill="#F2F2F2"
         style={{ fontFamily: "var(--font-montserrat)" }}
       >
-        FORÇA
+        {text}
       </text>
     </svg>
   );
@@ -45,6 +50,7 @@ function Word() {
  * .tear-half recebe só transform/opacity (GSAP); o clip e os filtros ficam em filhos estáticos.
  */
 function Sheet({ half }: { half: Half }) {
+  const { t } = useI18n();
   return (
     <div className="tear-half" data-half={half}>
       {/* Sombra projetada do lado do vão (fora do clip, para cair sobre a camada de baixo) */}
@@ -57,10 +63,10 @@ function Sheet({ half }: { half: Half }) {
           <div className="tear-word-wrap">
             {half === "top" && (
               <p className="tear-label" data-role="label">
-                Construída para proteger
+                {t("tear.label")}
               </p>
             )}
-            <Word />
+            <Word text={t("tear.word")} />
           </div>
         </div>
         <div className="tear-grain" />
@@ -81,6 +87,7 @@ function Sheet({ half }: { half: Half }) {
 
 export function TearSection({ enable3D }: { enable3D: boolean }) {
   const sectionRef = useRef<HTMLElement>(null);
+  const { t } = useI18n();
 
   useGSAP(
     () => {
@@ -304,7 +311,7 @@ export function TearSection({ enable3D }: { enable3D: boolean }) {
   return (
     <section ref={sectionRef} id="sobre" className="tear" aria-labelledby="tear-title">
       <h2 id="tear-title" className="sr-only">
-        Força. Construída para proteger.
+        {t("tear.srTitle")}
       </h2>
 
       {/* Filtros estáticos (nunca animados); regiões ajustadas no layout */}
@@ -369,7 +376,7 @@ export function TearSection({ enable3D }: { enable3D: boolean }) {
             height={68}
             className="tear-logo"
           />
-          <p className="tear-phrase">Tecnologia que empodera, simplifica e protege.</p>
+          <p className="tear-phrase">{t("tear.phrase")}</p>
         </div>
       </div>
 

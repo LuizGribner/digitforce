@@ -11,9 +11,9 @@ construtoras e hotéis.
 - Next.js App Router + TypeScript, export estático (`next.config.ts`: `output: "export"`, `images.unoptimized`).
 - Tailwind v4 + shadcn/ui (Radix, preset Nova).
 - `src/components/ui/`: orbiting-circles, number-ticker, border-beam, magic-card, shimmer-button (Magic UI), spotlight e
-  background-beams (Aceternity). Não reescrever esses arquivos: se uma prop não bater, ajustar o uso no `page.tsx`.
+  background-beams (Aceternity). Não reescrever esses arquivos: se uma prop não bater, ajustar o uso no `home-page.tsx`.
 - three, @react-three/fiber, @react-three/drei, motion. Cenas 3D ficam em `src/components/three/` e entram no
-  `page.tsx` via `next/dynamic` com `ssr: false`. Não criar outros `<Canvas>`: usar `<View>` no canvas único.
+  `home-page.tsx` via `next/dynamic` com `ssr: false`. Não criar outros `<Canvas>`: usar `<View>` no canvas único.
 - Não instalar bibliotecas novas sem perguntar.
 
 ## Identidade visual
@@ -27,10 +27,29 @@ construtoras e hotéis.
   com logo, CTA em card); hero com feixe de luz sobre objeto 3D (CZ Cyber Security); cards de vidro com objetos 3D
   escapando da borda (Profico Academy).
 
+## Idiomas (i18n)
+
+- en (padrão) na raiz `/`, pt-BR em `/pt-br/`, pt-PT em `/pt-pt/`. Rota única `src/app/[[...locale]]/` (layout raiz
+  com `<html lang>`, `generateMetadata` com hreflang/x-default e `generateStaticParams`; `dynamicParams = false`).
+  `trailingSlash: true` (cada idioma vira pasta com index.html). Sem middleware.
+- Dicionários em `src/i18n/{en,pt-BR,pt-PT}.ts`: `en.ts` define o formato (`Dictionary`); os outros são tipados com
+  ele, então chave faltando quebra o build. Nos componentes: `const { t, dict, locale } = useI18n()`; `t("a.b")` para
+  textos simples (chaves tipadas), `dict` para listas e objetos por id. O servidor passa só o dicionário do idioma.
+- Todo texto visível, aria-label, alt e sr-only vem do dicionário. Nomes de marca (Digit Force, Athpace) não se
+  traduzem. pt-PT é português europeu (ecrã, telemóvel, equipa, contacto, controlo, receção...).
+- Seletor (`components/language-switcher.tsx`) no header e no menu mobile; troca por navegação completa guardando a
+  seção visível (`i18n/navigation.ts`, sessionStorage) e a escolha (localStorage `df-locale`). Na raiz, navegador em
+  português e sem escolha salva: aviso `components/locale-suggestion.tsx` (nunca redireciona).
+- Palavra do rasgo: FORCE (en) / FORÇA (pt). O `<text>` usa `textLength`, então qualquer palavra ocupa a mesma caixa e
+  a geometria de `tear-geometry.ts` vale para todas.
+- Legendas do vídeo: `public/assets/video/subtitles/{en,pt-PT}.vtt`. O `page.tsx` só cria o `<track>` se o arquivo
+  existir no build (ainda não existem: TODO).
+
 ## Estrutura
 
-- `src/app/page.tsx`: as seções (header, hero com globo 3D, rasgo "FORÇA" (#sobre), números e pilares, órbita de
-  integrações, produtos, Athpace, manifesto com anel, CTA, rodapé).
+- `src/components/home-page.tsx` (montado por `src/app/[[...locale]]/page.tsx`): as seções (header, hero com globo
+  3D, rasgo "FORCE"/"FORÇA" (#sobre), números e pilares, órbita de integrações, produtos, Athpace, manifesto com anel,
+  CTA, rodapé).
 - Hero (`src/components/hero/hero.tsx` + `src/components/three/hero-globe.tsx`): globo-circuito procedural com um
   chip andando no topo. Física em `src/components/hero-globe/globe-motion.ts` (portada da referência
   orbit-delivery-hero: mola + amortecimento no arrasto, roaming após 3,5 s, chip buscando o topo visível com mola,
@@ -51,7 +70,7 @@ construtoras e hotéis.
   `pointer.ts` (dentro de um View o `state.pointer` é do portal, não da janela).
 - Quando o canvas existe: sempre que há WebGL (`use-webgl.ts`), inclusive no mobile e em reduced motion, porque o
   globo do hero roda nesses casos. Falha em runtime cai no `CanvasBoundary` e a página volta aos fallbacks.
-- As demais cenas usam `useEnable3D()` (>= 768px e sem reduced motion) combinado com WebGL; fora disso o `page.tsx`
+- As demais cenas usam `useEnable3D()` (>= 768px e sem reduced motion) combinado com WebGL; fora disso o `home-page.tsx`
   mostra as imagens estáticas (e no HTML do export). Elementos que precisem ficar acima do 3D usam z-10+.
 - O canvas usa `flat` (NoToneMapping): o ACES acinzentava a lavanda e o roxo da marca. O "df" tem as variantes
   `perola` (padrão, hero e manifesto) e `roxo` (órbita).
@@ -133,7 +152,7 @@ construtoras e hotéis.
 
 ## Pendências
 
-- `WHATSAPP` e `EMAIL` no topo do `page.tsx` e os números em `athpace-stats.tsx` são placeholders com TODO.
+- `WHATSAPP` e `EMAIL` no topo do `home-page.tsx` e os números em `athpace-stats.tsx` são placeholders com TODO.
 - Frases curtas dos cards de integração (`integrations-orbit.tsx`) têm TODO de revisão com o cliente.
 - As fotos `app-tela.webp` e `terminal-monitoramento.webp` mostram interface em chinês (como o gateway, excluído).
   Manter os TODOs até o cliente confirmar.

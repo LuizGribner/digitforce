@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import {
@@ -20,7 +20,7 @@ import { IntegrationsOrbit } from "@/components/sections/integrations-orbit";
 import { Manifesto } from "@/components/sections/manifesto";
 import { HeroStatic, OrbitStatic, TearStatic } from "@/components/sections/static-fallbacks";
 import { SectionBoundary } from "@/components/section-boundary";
-import { AthpaceVideo } from "@/components/athpace-video";
+import { AthpaceVideo, type SubtitleTrack } from "@/components/athpace-video";
 import { AthpaceStats } from "@/components/sections/athpace-stats";
 
 import { useEnable3D } from "@/components/three/use-enable-3d";
@@ -28,6 +28,10 @@ import { useWebGL } from "@/components/three/use-webgl";
 import { CanvasBoundary } from "@/components/three/canvas-boundary";
 import { Hero } from "@/components/hero/hero";
 import type { ProductKind } from "@/components/three/product-model";
+import { LocaleSuggestion } from "@/components/locale-suggestion";
+import { getLenis } from "@/components/providers/smooth-scroll";
+import { takeRestoreTarget } from "@/i18n/navigation";
+import { useI18n } from "@/i18n/provider";
 
 // Um único <Canvas> fixo; as seções só renderizam <View>s que desenham nele
 const SceneCanvas = dynamic(() => import("@/components/three/scene-canvas"), { ssr: false });
@@ -39,48 +43,16 @@ const EMAIL = "contato@digitforce.com.br";
 
 const A = "/assets";
 
-const nav: { href: `#${string}`; label: string }[] = [
-  { href: "#solucoes", label: "Soluções" },
-  { href: "#produtos", label: "Produtos" },
-  { href: "#sobre", label: "Sobre" },
-  { href: "#contato", label: "Contato" },
-];
+type NavItem = { href: `#${string}`; label: string };
 
-const athpaceHighlights = [
-  {
-    icon: Languages,
-    title: "Multilíngue",
-    text: "Entende e responde o hóspede no idioma dele. A barreira de idioma deixa de existir.",
-  },
-  {
-    icon: BellRing,
-    title: "Chamados automáticos",
-    text: "Pedidos por voz viram chamados para a equipe certa, sem ligar para a recepção.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Dados no servidor local",
-    text: "Informações do hóspede e do hotel ficam em servidor local, com criptografia de ponta a ponta.",
-  },
-];
+// Ícones na ordem de athpace.highlights do dicionário
+const highlightIcons = [Languages, BellRing, ShieldCheck];
 
-const products: { id: ProductKind; title: string; text: string; img: string; videoHref?: string }[] = [
-  {
-    id: "interfones",
-    title: "Interfonia digital 2 fios",
-    text: "Monitor interno e unidade externa com vídeo, sobre a fiação existente. Ideal para retrofit sem quebra-quebra.",
-    img: `${A}/produtos/interfone/unidade-externa-frente-sm.webp`,
-  },
-  {
-    id: "elevadores",
-    title: "Emergência para elevadores",
-    text: "Comunicação da cabine com a central, gateway para casa de máquinas e monitoramento remoto.",
-    img: `${A}/produtos/elevador/intercomunicador-cabine-a-sm.webp`,
-  },
+const products: { id: ProductKind; img: string; videoHref?: string }[] = [
+  { id: "interfones", img: `${A}/produtos/interfone/unidade-externa-frente-sm.webp` },
+  { id: "elevadores", img: `${A}/produtos/elevador/intercomunicador-cabine-a-sm.webp` },
   {
     id: "athpace",
-    title: "Athpace: IA para hotelaria",
-    text: "Assistente de voz multilíngue no quarto, integrado ao PMS, com dados em servidor local.",
     img: `${A}/produtos/interfone/monitor-interno-frente-tela-ligada-sm.webp`, // TODO: trocar pela foto do speaker Athpace
     videoHref: "#athpace",
   },
@@ -103,13 +75,40 @@ function CtaButton({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function Home() {
+/**
+ * Depois de trocar de idioma (navigation.ts), volta para a mesma seção em vez do topo. Um frame depois do mount, para
+ * o Lenis (criado no efeito do provider, que roda depois deste) já existir.
+ */
+function useRestoreLocalePosition() {
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => {
+      const y = takeRestoreTarget();
+      if (y === null) return;
+      const lenis = getLenis();
+      if (lenis) lenis.scrollTo(y, { immediate: true, force: true });
+      else window.scrollTo(0, y);
+    });
+    return () => cancelAnimationFrame(raf);
+  }, []);
+}
+
+export function HomePage({ subtitles }: { subtitles: SubtitleTrack[] }) {
+  const { dict, t } = useI18n();
+  useRestoreLocalePosition();
+
   // O canvas global existe sempre que há WebGL (o globo do hero roda também no mobile e em reduced motion).
   // As demais cenas 3D seguem só em >= 768px e sem reduced motion; fora disso, imagens estáticas.
   const webglSupported = useWebGL();
   const [glFailed, setGlFailed] = useState(false);
   const webgl = webglSupported && !glFailed;
   const enable3D = useEnable3D() && webgl;
+
+  const nav: NavItem[] = [
+    { href: "#solucoes", label: t("nav.solutions") },
+    { href: "#produtos", label: t("nav.products") },
+    { href: "#sobre", label: t("nav.about") },
+    { href: "#contato", label: t("nav.contact") },
+  ];
 
   return (
     <main className="relative overflow-x-clip">
@@ -124,16 +123,16 @@ export default function Home() {
       <SiteHeader nav={nav} contactHref={WHATSAPP} />
 
       {/* 1. HERO: globo-circuito 3D interativo com o chip */}
-      <SectionBoundary name="hero" fallback={<HeroStatic cta={<CtaButton>Falar com um especialista</CtaButton>} />}>
+      <SectionBoundary name="hero" fallback={<HeroStatic cta={<CtaButton>{t("hero.cta")}</CtaButton>} />}>
         <Hero
           webgl={webgl}
           globeMode={enable3D ? "view" : "canvas"}
           onGlError={() => setGlFailed(true)}
-          cta={<CtaButton>Falar com um especialista</CtaButton>}
+          cta={<CtaButton>{t("hero.cta")}</CtaButton>}
         />
       </SectionBoundary>
 
-      {/* 2. RASGO (#sobre): FORÇA rasga e revela o "df" + frase */}
+      {/* 2. RASGO (#sobre): FORCE/FORÇA rasga e revela o "df" + frase */}
       <SectionBoundary name="rasgo" fallback={<TearStatic />}>
         <TearSection enable3D={enable3D} />
       </SectionBoundary>
@@ -150,7 +149,7 @@ export default function Home() {
       <section id="produtos" className="py-20">
         <Container>
           <h2 className="text-3xl font-semibold md:text-4xl">
-            Três linhas, <span className="df-gradient-text">um só ecossistema</span>
+            {t("products.titleA")} <span className="df-gradient-text">{t("products.titleB")}</span>
           </h2>
           <div className="mt-12 grid gap-6 md:grid-cols-3">
             {products.map((p) => (
@@ -169,31 +168,34 @@ export default function Home() {
               Athpace
             </span>
             <h2 className="mt-5 text-3xl font-semibold leading-tight md:text-5xl">
-              IA que entende <span className="df-gradient-text block">cada hóspede</span>
+              {t("athpace.titleA")} <span className="df-gradient-text block">{t("athpace.titleB")}</span>
             </h2>
             <p className="mx-auto mt-5 max-w-xl text-balance text-[var(--muted-foreground)]">
-              Controle do quarto por voz, pedidos sem ligar para a recepção e zero barreira de idioma.
+              {t("athpace.lead")}
             </p>
           </div>
 
           <div className="mx-auto mt-12 max-w-5xl">
-            <AthpaceVideo />
+            <AthpaceVideo subtitles={subtitles} />
           </div>
 
           <AthpaceStats />
 
           <ul className="mx-auto mt-10 grid max-w-5xl gap-6 md:grid-cols-3">
-            {athpaceHighlights.map(({ icon: Icon, title, text }) => (
-              <li key={title} className="flex gap-4">
-                <span className="glass flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--df-purple-light)]">
-                  <Icon className="h-5 w-5" strokeWidth={1.6} />
-                </span>
-                <div>
-                  <h3 className="font-semibold">{title}</h3>
-                  <p className="mt-1 text-sm text-[var(--muted-foreground)]">{text}</p>
-                </div>
-              </li>
-            ))}
+            {dict.athpace.highlights.map(({ title, text }, i) => {
+              const Icon = highlightIcons[i];
+              return (
+                <li key={title} className="flex gap-4">
+                  <span className="glass flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--df-purple-light)]">
+                    <Icon className="h-5 w-5" strokeWidth={1.6} />
+                  </span>
+                  <div>
+                    <h3 className="font-semibold">{title}</h3>
+                    <p className="mt-1 text-sm text-[var(--muted-foreground)]">{text}</p>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         </Container>
       </section>
@@ -210,13 +212,13 @@ export default function Home() {
             <BackgroundBeams />
             <div className="relative z-10">
               <h2 className="text-3xl font-semibold md:text-4xl">
-                Seja um parceiro <span className="df-gradient-text">Digit Force</span>
+                {t("cta.titleA")} <span className="df-gradient-text">{t("cta.titleB")}</span>
               </h2>
               <p className="mx-auto mt-4 max-w-md text-sm text-[var(--muted-foreground)]">
-                Integradores, construtoras e hotéis: fale com nosso time e monte o projeto certo para o seu cliente.
+                {t("cta.text")}
               </p>
               <div className="mt-8 flex justify-center">
-                <CtaButton>Chamar no WhatsApp</CtaButton>
+                <CtaButton>{t("cta.button")}</CtaButton>
               </div>
             </div>
           </div>
@@ -229,7 +231,7 @@ export default function Home() {
           <div>
             <Image src={`${A}/logo/digitforce-horizontal-branco.svg`} alt="Digit Force" width={140} height={32} />
             <p className="mt-3 max-w-xs text-xs text-[var(--muted-foreground)]">
-              Soluções inteligentes para segurança, controle de acesso e hotelaria.
+              {t("footer.tagline")}
             </p>
           </div>
           <nav className="flex gap-8 text-sm text-[var(--muted-foreground)]">
@@ -245,12 +247,16 @@ export default function Home() {
         </Container>
         <Container className="pb-8 text-xs text-[var(--muted-foreground)]">© 2026 Digit Force</Container>
       </footer>
+
+      <LocaleSuggestion />
     </main>
   );
 }
 
 function ProductCard({ product: p, enable3D }: { product: (typeof products)[number]; enable3D: boolean }) {
   const cardRef = useRef<HTMLElement>(null);
+  const { dict, t } = useI18n();
+  const { title, text } = dict.products.items[p.id];
 
   return (
     <article ref={cardRef} id={`produto-${p.id}`} className="glass flex flex-col overflow-hidden rounded-2xl p-6">
@@ -260,18 +266,18 @@ function ProductCard({ product: p, enable3D }: { product: (typeof products)[numb
           // O View passa da borda de cima do card para o modelo poder escapar dela (o canvas não é cortado pelo overflow)
           <ProductModel kind={p.id} hoverRef={cardRef} className="absolute -inset-x-6 -top-16 bottom-0" />
         ) : (
-          <Image src={p.img} alt={p.title} width={260} height={260} className="relative max-h-52 w-auto object-contain" />
+          <Image src={p.img} alt={title} width={260} height={260} className="relative max-h-52 w-auto object-contain" />
         )}
       </div>
-      <h3 className="mt-6 text-lg font-semibold">{p.title}</h3>
-      <p className="mt-2 text-sm text-[var(--muted-foreground)]">{p.text}</p>
+      <h3 className="mt-6 text-lg font-semibold">{title}</h3>
+      <p className="mt-2 text-sm text-[var(--muted-foreground)]">{text}</p>
       {p.videoHref && (
         <a
           href={p.videoHref}
           className="glass mt-5 inline-flex w-fit items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold transition-colors hover:text-white"
         >
           <PlayCircle className="h-4 w-4 text-[var(--df-purple-light)]" />
-          Ver vídeo
+          {t("products.watchVideo")}
         </a>
       )}
     </article>

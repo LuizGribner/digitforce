@@ -5,6 +5,8 @@ import Image from "next/image";
 import { Menu, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/i18n/provider";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 type NavItem = { href: `#${string}`; label: string };
 
@@ -55,6 +57,7 @@ export function SiteHeader({ nav, contactHref }: { nav: NavItem[]; contactHref: 
   // No topo a pílula é maior; ao rolar ela compacta
   const compact = useScrolled();
   const [open, setOpen] = useState(false);
+  const { t } = useI18n();
 
   useEffect(() => {
     if (!open) return;
@@ -81,7 +84,7 @@ export function SiteHeader({ nav, contactHref }: { nav: NavItem[]; contactHref: 
           compact ? "mt-3 h-14 max-w-full pl-5 pr-2 md:max-w-[min(64rem,80vw)]" : "mt-5 h-20 max-w-full pl-8 pr-3 md:max-w-[80vw]",
         )}
       >
-        <a href="#" aria-label="Digit Force, início" onClick={() => setOpen(false)}>
+        <a href="#" aria-label={t("header.home")} onClick={() => setOpen(false)}>
           <Image
             src="/assets/logo/digitforce-horizontal-dark-bg.svg"
             alt="Digit Force"
@@ -93,7 +96,7 @@ export function SiteHeader({ nav, contactHref }: { nav: NavItem[]; contactHref: 
         </a>
 
         <nav
-          aria-label="Principal"
+          aria-label={t("header.mainNav")}
           className={cn("hidden items-center gap-1 transition-[font-size] duration-500 md:flex", compact ? "text-sm" : "text-base")}
         >
           {nav.map((n) => {
@@ -116,6 +119,7 @@ export function SiteHeader({ nav, contactHref }: { nav: NavItem[]; contactHref: 
         </nav>
 
         <div className="flex items-center gap-2">
+          <LanguageSwitcher compact={compact} className="hidden md:block" />
           <a
             href={contactHref}
             target="_blank"
@@ -125,11 +129,11 @@ export function SiteHeader({ nav, contactHref }: { nav: NavItem[]; contactHref: 
               compact ? "px-4 py-2 text-xs" : "px-6 py-3 text-sm",
             )}
           >
-            Fale conosco
+            {t("header.contact")}
           </a>
           <button
             type="button"
-            aria-label={open ? "Fechar menu" : "Abrir menu"}
+            aria-label={t(open ? "header.closeMenu" : "header.openMenu")}
             aria-expanded={open}
             aria-controls="menu-mobile"
             onClick={() => setOpen((v) => !v)}
@@ -149,7 +153,7 @@ export function SiteHeader({ nav, contactHref }: { nav: NavItem[]; contactHref: 
         hidden={!open}
         className="glass-strong mx-auto mt-2 max-w-5xl rounded-3xl p-2 md:hidden"
       >
-        <nav aria-label="Principal (mobile)" className="flex flex-col">
+        <nav aria-label={t("header.mobileNav")} className="flex flex-col">
           {nav.map((n) => {
             const isActive = active === n.href.slice(1);
             return (
@@ -174,9 +178,10 @@ export function SiteHeader({ nav, contactHref }: { nav: NavItem[]; contactHref: 
             onClick={() => setOpen(false)}
             className="mt-1 rounded-2xl bg-[var(--df-purple)] px-4 py-3 text-center text-sm font-semibold text-white"
           >
-            Fale conosco
+            {t("header.contact")}
           </a>
         </nav>
+        <LanguageSwitcher variant="panel" className="mt-2" />
       </div>
     </header>
   );

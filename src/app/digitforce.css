@@ -570,9 +570,23 @@ section[id] {
   animation: spotlight 2s ease 0.75s 1 forwards;
 }
 
+/* Aviso de idioma (components/locale-suggestion.tsx): entra devagar, depois do hero */
+@keyframes locale-suggestion-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+.locale-suggestion {
+  animation: locale-suggestion-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) 1.2s both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+  .locale-suggestion {
+    animation: none;
   }
   .animate-spotlight {
     animation: none;

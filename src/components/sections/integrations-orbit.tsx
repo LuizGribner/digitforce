@@ -6,6 +6,8 @@ import Image from "next/image";
 
 import { gsap, ScrollTrigger, useGSAP } from "@/lib/gsap";
 import { cn } from "@/lib/utils";
+import type { Dictionary } from "@/i18n";
+import { useI18n } from "@/i18n/provider";
 import { orbitState } from "./orbit-state";
 import { HOVER_SCALE, maxScaleAt, orbitPose, solveLayout, stackPose, type OrbitLayout } from "./orbit-layout";
 
@@ -13,19 +15,20 @@ const IntegrationsMark = dynamic(() => import("@/components/three/integrations-m
 
 const P = "/assets/produtos";
 
-type Card = { id: string; name: string; text: string; img: string; mobileHidden?: boolean };
+type Card = { id: keyof Dictionary["orbit"]["cards"]; img: string; mobileHidden?: boolean };
 
 // Ordem da órbita; todos com foto. Versões "-sm" (640px): o card mostra no máximo ~220px e a original de até 1600px
-// custava até 7,5MB de memória decodificada por imagem no celular. TODO: revisar as frases curtas com o cliente
+// custava até 7,5MB de memória decodificada por imagem no celular. Nome e frase de cada card ficam no dicionário
+// (orbit.cards). TODO: revisar as frases curtas com o cliente
 export const CARDS: Card[] = [
-  { id: "interfone", name: "Interfone", img: `${P}/interfone/unidade-externa-frente-sm.webp`, text: "Vídeo e áudio na portaria, sobre os 2 fios que o prédio já tem." },
-  { id: "monitor", name: "Monitor interno", img: `${P}/interfone/monitor-interno-frente-tela-ligada-sm.webp`, text: "Atende a portaria e libera o acesso de dentro do apartamento." },
-  { id: "app", name: "App do morador", img: `${P}/elevador/app-tela-sm.webp`, text: "Chamadas e avisos no celular, de onde o morador estiver." },
-  { id: "camera", name: "Câmera", img: `${P}/elevador/camera-luz-teto.webp`, text: "Imagem da cabine e das áreas comuns no mesmo ecossistema." },
-  { id: "elevador", name: "Elevador", img: `${P}/elevador/intercomunicador-cabine-a-sm.webp`, text: "A cabine fala direto com a central numa emergência." },
-  { id: "botao", name: "Botão de emergência", img: `${P}/elevador/botao-emergencia.webp`, text: "Um toque abre o chamado e avisa a equipe certa." },
-  { id: "terminal", name: "Terminal de monitoramento", img: `${P}/elevador/terminal-monitoramento-sm.webp`, text: "Chamados e alarmes de todo o prédio numa tela só.", mobileHidden: true },
-  { id: "sensor", name: "Sensor", img: `${P}/elevador/sensor-sm.webp`, text: "Temperatura e umidade da casa de máquinas no monitoramento.", mobileHidden: true },
+  { id: "interfone", img: `${P}/interfone/unidade-externa-frente-sm.webp` },
+  { id: "monitor", img: `${P}/interfone/monitor-interno-frente-tela-ligada-sm.webp` },
+  { id: "app", img: `${P}/elevador/app-tela-sm.webp` },
+  { id: "camera", img: `${P}/elevador/camera-luz-teto.webp` },
+  { id: "elevador", img: `${P}/elevador/intercomunicador-cabine-a-sm.webp` },
+  { id: "botao", img: `${P}/elevador/botao-emergencia.webp` },
+  { id: "terminal", img: `${P}/elevador/terminal-monitoramento-sm.webp`, mobileHidden: true },
+  { id: "sensor", img: `${P}/elevador/sensor-sm.webp`, mobileHidden: true },
 ];
 
 /**
@@ -48,6 +51,7 @@ type Api = { activate?: (index: number | null) => void };
 
 export function IntegrationsOrbit({ enable3D }: { enable3D: boolean }) {
   const section = useRef<HTMLElement>(null);
+  const { dict, t } = useI18n();
   const activeRef = useRef<number | null>(null);
   const api = useRef<Api>({});
   const [active, setActive] = useState<number | null>(null);
@@ -368,7 +372,7 @@ export function IntegrationsOrbit({ enable3D }: { enable3D: boolean }) {
                 />
               </span>
               <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#000024]/85 via-[#000024]/45 to-transparent px-3 pb-3 pt-10 text-center text-[11px] font-semibold leading-tight text-[#F2F2F2] md:text-xs">
-                {c.name}
+                {dict.orbit.cards[c.id].name}
               </span>
             </span>
             <span
@@ -379,7 +383,7 @@ export function IntegrationsOrbit({ enable3D }: { enable3D: boolean }) {
                 active === i ? "opacity-100" : "opacity-0",
               )}
             >
-              {c.text}
+              {dict.orbit.cards[c.id].text}
             </span>
           </button>
         ))}
@@ -397,10 +401,10 @@ export function IntegrationsOrbit({ enable3D }: { enable3D: boolean }) {
               id="orbit-title"
               className="text-balance text-3xl font-semibold leading-tight md:text-5xl md:[@media(max-height:820px)]:text-4xl"
             >
-              Integra com o que o seu prédio <span className="df-gradient-text">ou hotel já usa</span>
+              {t("orbit.titleA")} <span className="df-gradient-text">{t("orbit.titleB")}</span>
             </h2>
             <p className="mx-auto mt-4 max-w-[52ch] text-balance text-sm text-[var(--muted-foreground)] md:text-base">
-              PMS, automação de quartos, telefonia, Wi-Fi, câmeras e aplicativo. Tudo conversando em um só ecossistema.
+              {t("orbit.subtitle")}
             </p>
           </div>
         </div>

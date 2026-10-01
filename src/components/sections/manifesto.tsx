@@ -4,21 +4,24 @@ import { useRef } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 
+import { useI18n } from "@/i18n/provider";
+
 const ManifestoRing = dynamic(() => import("@/components/three/manifesto-ring"), { ssr: false });
 
 /** Manifesto com o anel 3D e o "df"; com enable3D false (ou como fallback de erro) mostra o anel estático. */
 export function Manifesto({ enable3D }: { enable3D: boolean }) {
   const sectionRef = useRef<HTMLElement>(null);
+  const { t } = useI18n();
 
   return (
     <section ref={sectionRef} className="py-20">
       <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-6 md:grid-cols-2">
         <div>
           <h2 className="max-w-md text-balance text-3xl font-semibold leading-tight md:text-4xl">
-            Uma força digital construída <span className="df-gradient-text">para impulsionar o futuro</span>
+            {t("manifesto.titleA")} <span className="df-gradient-text">{t("manifesto.titleB")}</span>
           </h2>
           <p className="mt-4 max-w-md text-sm text-[var(--muted-foreground)]">
-            Acreditamos que tecnologia precisa empoderar, simplificar, proteger e evoluir junto com o mundo.
+            {t("manifesto.text")}
           </p>
         </div>
         <div className="relative mx-auto flex h-80 w-80 items-center justify-center">
