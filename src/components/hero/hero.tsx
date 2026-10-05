@@ -142,9 +142,10 @@ export function Hero({ webgl, globeMode, onGlError, cta }: HeroProps) {
       <Spotlight className="hero-spotlight-svg -top-40 left-0 md:-top-20 md:left-60" fill="#A89CF0" />
       <div aria-hidden className="hero-spotlight-css pointer-events-none absolute -left-1/4 -top-24 h-[70%] w-[150%]" />
 
-      {/* Coluna de texto (z-10, acima do canvas) */}
-      <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col px-6 pt-32 lg:h-full lg:justify-center lg:pt-10">
-        <div className="lg:w-[48%]">
+      {/* Coluna de texto (z-10, acima do canvas). O container ocupa a altura toda e cobre parte do globo:
+          só o bloco do texto recebe ponteiro, senão o arrasto do globo morre à esquerda da borda do container */}
+      <div className="pointer-events-none relative z-10 mx-auto flex w-full max-w-6xl flex-col px-6 pt-32 lg:h-full lg:justify-center lg:pt-10">
+        <div className="pointer-events-auto lg:w-[48%]">
           <h1
             id="hero-title"
             data-split
