@@ -44,6 +44,8 @@ const scaleSetter = (el: Element) => {
   };
 };
 
+// Escala mínima efetiva do texto dos cards (12px * 0.9 ~ 11px na tela)
+const MIN_TEXT_SCALE = 0.9;
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 const inOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
 
@@ -117,6 +119,9 @@ export function IntegrationsOrbit({ enable3D }: { enable3D: boolean }) {
             z: gsap.quickSetter(el, "zIndex"),
           }));
           const back = new Array(n).fill(false);
+          // Contraescala do texto (nome e frase): os cards de trás chegam a ~0.5 da escala e o texto ficava ilegível.
+          // Valor em degraus de 0.05, gravado só quando muda (mexe na largura do nome, então não pode ser por frame)
+          const textScale = new Array(n).fill(1);
           const setText = { o: gsap.quickSetter(text, "opacity"), y: gsap.quickSetter(text, "y", "px") };
           const setGlow = { o: gsap.quickSetter(glow, "opacity"), s: scaleSetter(glow) };
           const setFallback = fallback ? { o: gsap.quickSetter(fallback, "opacity"), s: scaleSetter(fallback) } : null;
@@ -177,6 +182,11 @@ export function IntegrationsOrbit({ enable3D }: { enable3D: boolean }) {
               set[i].s(scale);
               set[i].o(1 - 0.45 * backness);
               set[i].z(h > 0.02 ? 500 : spread < 0.5 ? i + 1 : Math.round((b.depth + 1) * 100) + 1);
+              const ts = Math.round(Math.max(1, MIN_TEXT_SCALE / scale) * 20) / 20;
+              if (ts !== textScale[i]) {
+                textScale[i] = ts;
+                cards[i].style.setProperty("--ts", String(ts));
+              }
               const isBack = backness > 0.5;
               if (isBack !== back[i]) {
                 back[i] = isBack;
@@ -293,7 +303,10 @@ export function IntegrationsOrbit({ enable3D }: { enable3D: boolean }) {
             gsap.ticker.remove(tick);
             root.removeEventListener("pointermove", onMove);
             root.removeEventListener("pointerleave", onLeave);
-            cards.forEach((el) => delete el.dataset.back);
+            cards.forEach((el) => {
+              delete el.dataset.back;
+              el.style.removeProperty("--ts");
+            });
             api.current.activate = undefined;
             orbitState.reveal = 1;
             orbitState.flash = 0;
@@ -371,7 +384,7 @@ export function IntegrationsOrbit({ enable3D }: { enable3D: boolean }) {
                   className="object-contain drop-shadow-[0_10px_16px_rgba(0,0,24,0.55)]"
                 />
               </span>
-              <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#000024]/85 via-[#000024]/45 to-transparent px-3 pb-3 pt-10 text-center text-[11px] font-semibold leading-tight text-[#F2F2F2] md:text-xs">
+              <span className="orbit-card-name absolute bottom-0 left-1/2 -translate-x-1/2 bg-gradient-to-t from-[#000024]/85 via-[#000024]/45 to-transparent px-3 pb-3 pt-10 text-center text-[11px] font-semibold leading-tight text-[#F2F2F2] md:text-xs">
                 {dict.orbit.cards[c.id].name}
               </span>
             </span>

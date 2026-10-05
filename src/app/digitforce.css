@@ -52,6 +52,12 @@ html.lenis {
   scroll-behavior: auto;
 }
 
+/* Lenis parado (arrasto do globo do hero): o lenis.css põe overflow: clip no html, a barra de rolagem some e a
+   página treme de largura. A roda já é bloqueada pelo próprio Lenis parado (preventDefault), então a barra fica */
+html.lenis.lenis-stopped:not(.lenis-autoToggle) {
+  overflow: visible;
+}
+
 /* Toque: retorno visual ao tocar em links e botões (substitui o flash cinza do iOS; hover não existe no toque).
    Nos cards da órbita a opacidade é do GSAP (inline), então esta regra não interfere neles. */
 @media (hover: none) {
@@ -464,14 +470,25 @@ section[id] {
   filter: blur(1.5px);
 }
 
+/* Contraescala (--ts, gravado pelo JS): o texto não encolhe junto com os cards do fundo. O nome fica mais estreito
+   na mesma proporção, então depois de escalado continua com a largura do card (quebra em mais linhas) */
+.orbit-card-name {
+  width: calc(100% / var(--ts, 1));
+  scale: var(--ts, 1);
+  transform-origin: 50% 100%;
+}
+
 .orbit-tip {
   bottom: 100%;
   margin-bottom: 0.75rem;
+  scale: var(--ts, 1);
+  transform-origin: 50% 100%;
 }
 .orbit-card[data-tip="below"] .orbit-tip {
   top: 100%;
   bottom: auto;
   margin: 0.75rem 0 0;
+  transform-origin: 50% 0;
 }
 
 /* Cards se movem a cada frame: blur normal, sem a refração (custosa em várias camadas animadas) */
